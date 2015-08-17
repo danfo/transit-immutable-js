@@ -1,7 +1,7 @@
 var transit = require('transit-js');
 var Immutable = require('immutable');
 
-var reader = transit.reader('json', {
+var readerOptions = {
   mapBuilder: {
     init: function() {
       return {};
@@ -36,7 +36,7 @@ var reader = transit.reader('json', {
       return Immutable.Set(v);
     }
   }
-});
+};
 
 var writer = transit.writer('json', {
   handlers: transit.map([
@@ -93,12 +93,37 @@ var writer = transit.writer('json', {
   ])
 });
 
-exports.toJSON = toJSON;
-function toJSON(data) {
-  return writer.write(data);
-}
+module.exports = {
+  registerRecord: function registerRecord(Record) {
+    var tag = 'iR-' + Record.name;
+    writer.register(Record, transit.makeWriteHandler({
+      tag: function() {
+        return tag;
+      },
+      rep: function(m) {
+        var i = 0, a = new Array(2 * m.size);
+        m.forEach(function(v, k) {
+          a[i++] = k;
+          a[i++] = v;
+        });
+        return a;
+      }
+    }));
+    readerOptions.handlers[tag] = function(v) {
+      var m = new Record().asMutable();
+      for (var i = 0; i < v.length; i += 2) {
+        m = m.set(v[i], v[i + 1]);
+      }
+      return m.asImmutable();
+    };
+  },
 
-exports.fromJSON = fromJSON;
-function fromJSON(data) {
-  return reader.read(data);
-}
+  toJSON: function toJSON(data) {
+    return writer.write(data);
+  },
+
+  fromJSON: function fromJSON(data) {
+    var reader = transit.reader('json', readerOptions);
+    return reader.read(data);
+  }
+};
