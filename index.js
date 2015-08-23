@@ -95,7 +95,15 @@ var writer = transit.writer('json', {
 
 module.exports = {
   registerRecord: function registerRecord(Record) {
-    var tag = 'iR-' + Record.name;
+    if (typeof Record.transitTag !== 'string') {
+      var error = new Error(
+        '`transitTag` is a required static property for Immutable Records ' +
+        'being registered with transit-immutable-js.'
+      );
+      error.record = Record;
+      throw error;
+    }
+    var tag = Record.transitTag;
     writer.register(Record, transit.makeWriteHandler({
       tag: function() {
         return tag;
