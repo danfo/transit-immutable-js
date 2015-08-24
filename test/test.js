@@ -6,6 +6,10 @@ var Immutable = require('immutable');
 
 var transit = require('../');
 
+var SampleCustomRecord = Immutable.Record({a: 1, b: 2, c: null});
+SampleCustomRecord.transitTag = 'iR-scr';
+transit.registerRecord(SampleCustomRecord);
+
 var samples = Immutable.Map({
 
   "Immutable": Immutable.Map({
@@ -26,6 +30,8 @@ var samples = Immutable.Map({
       Immutable.List.of(1, 2),
       Immutable.List.of(1, 2, 3, 4, 5)
     ),
+
+    "Record": new SampleCustomRecord({c: 3}),
 
     "Sets": Immutable.Set.of(1, 2, 3, 3),
 
